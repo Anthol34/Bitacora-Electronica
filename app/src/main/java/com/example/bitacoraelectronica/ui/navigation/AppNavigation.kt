@@ -29,6 +29,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.bitacoraelectronica.ui.screens.LoginScreen
+import com.example.bitacoraelectronica.ui.screens.RegisterScreen
 import com.example.bitacoraelectronica.ui.screens.SplashScreen
 import kotlinx.coroutines.launch
 
@@ -123,7 +124,7 @@ fun AppNavigation(
                 }
 
                 composable(route = AppDestinations.Register.route) {
-                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                    RegisterScreen(navController = navController)
                 }
 
                 composable(route = AppDestinations.Reparaciones.route) {
