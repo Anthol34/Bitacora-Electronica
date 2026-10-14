@@ -27,6 +27,7 @@ import com.example.bitacoraelectronica.ui.components.AppDrawerContent
 import com.example.bitacoraelectronica.ui.components.BitacoraTopAppBar
 import com.example.bitacoraelectronica.ui.screens.LoginScreen
 import com.example.bitacoraelectronica.ui.screens.RegisterScreen
+import com.example.bitacoraelectronica.ui.screens.ReparacionesScreen
 import com.example.bitacoraelectronica.ui.screens.SplashScreen
 import kotlinx.coroutines.launch
 
@@ -131,7 +132,14 @@ fun AppNavigation(
                 }
 
                 composable(route = AppDestinations.Reparaciones.route) {
-                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                    ReparacionesScreen(
+                        onNavigateToNuevoRegistro = {
+                            navController.navigate(AppDestinations.DetalleReparacion.createRoute(0L))
+                        },
+                        onNavigateToDetalle = { reparacionId ->
+                            navController.navigate(AppDestinations.DetalleReparacion.createRoute(reparacionId))
+                        }
+                    )
                 }
 
                 composable(route = AppDestinations.Inventario.route) {
