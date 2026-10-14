@@ -2,26 +2,17 @@ package com.example.bitacoraelectronica.ui.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -31,6 +22,7 @@ import androidx.navigation.navArgument
 import com.example.bitacoraelectronica.ui.screens.LoginScreen
 import com.example.bitacoraelectronica.ui.screens.RegisterScreen
 import com.example.bitacoraelectronica.ui.screens.SplashScreen
+import com.example.bitacoraelectronica.ui.components.AppDrawerContent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -57,56 +49,25 @@ fun AppNavigation(
         gesturesEnabled = showDrawer,
         drawerContent = {
             if (showDrawer) {
-                ModalDrawerSheet {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Bitácora Electrónica",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                    )
-                    Text(
-                        text = "Gestión Técnica & Hardware",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 2.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    AppDestinations.drawerDestinations.forEach { destination ->
-                        val isSelected = currentRoute == destination.route
-                        NavigationDrawerItem(
-                            label = { Text(text = destination.title) },
-                            icon = destination.icon?.let { iconVector ->
-                                {
-                                    Icon(
-                                        imageVector = iconVector,
-                                        contentDescription = destination.title
-                                    )
+                AppDrawerContent(
+                    currentRoute = currentRoute,
+                    onNavigateToDestination = { destination ->
+                        coroutineScope.launch { drawerState.close() }
+                        if (currentRoute != destination.route) {
+                            navController.navigate(destination.route) {
+                                popUpTo(AppDestinations.Reparaciones.route) {
+                                    saveState = true
                                 }
-                            },
-                            selected = isSelected,
-                            onClick = {
-                                coroutineScope.launch { drawerState.close() }
-                                if (currentRoute != destination.route) {
-                                    navController.navigate(destination.route) {
-                                        popUpTo(AppDestinations.Reparaciones.route) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
-                            },
-                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                        )
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
                     }
-                }
+                )
             }
         }
     ) {
+    }
         Scaffold(
             modifier = modifier.fillMaxSize()
         ) { innerPadding ->
@@ -166,4 +127,3 @@ fun AppNavigation(
             }
         }
     }
-}
