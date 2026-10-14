@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.bitacoraelectronica.ui.components.AppDrawerContent
 import com.example.bitacoraelectronica.ui.components.BitacoraTopAppBar
+import com.example.bitacoraelectronica.ui.screens.ConfiguracionScreen
 import com.example.bitacoraelectronica.ui.screens.InventarioScreen
 import com.example.bitacoraelectronica.ui.screens.LoginScreen
 import com.example.bitacoraelectronica.ui.screens.RegisterScreen
@@ -152,7 +153,11 @@ fun AppNavigation(
                 }
 
                 composable(route = AppDestinations.Configuracion.route) {
-                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                    ConfiguracionScreen(
+                        onExportDatabaseClick = {
+                            // Se enlazará con la utilidad de exportación SQLite
+                        }
+                    )
                 }
 
                 composable(
