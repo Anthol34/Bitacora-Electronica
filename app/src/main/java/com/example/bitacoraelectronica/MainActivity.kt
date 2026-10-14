@@ -8,19 +8,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.bitacoraelectronica.ui.theme.BitacoraElectronicaTheme
+import com.example.bitacoraelectronica.ui.theme.BitacoraTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            BitacoraElectronicaTheme() {
+            BitacoraTheme() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // El NavHost principal se vinculará aquí
+
                 }
             }
         }
