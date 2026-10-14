@@ -4,7 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
@@ -19,10 +23,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bitacoraelectronica.ui.components.AppDrawerContent
+import com.example.bitacoraelectronica.ui.components.BitacoraTopAppBar
 import com.example.bitacoraelectronica.ui.screens.LoginScreen
 import com.example.bitacoraelectronica.ui.screens.RegisterScreen
 import com.example.bitacoraelectronica.ui.screens.SplashScreen
-import com.example.bitacoraelectronica.ui.components.AppDrawerContent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -33,16 +38,26 @@ fun AppNavigation(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
-    // Observador de la ruta actual para actualizar el ítem activo del menú
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Ocultar el menú lateral en pantallas de inicio, autenticación o cámara
-    val showDrawer = currentRoute != null &&
-            !currentRoute.startsWith(AppDestinations.Splash.route) &&
-            !currentRoute.startsWith(AppDestinations.Login.route) &&
-            !currentRoute.startsWith(AppDestinations.Register.route) &&
-            !currentRoute.startsWith("camera_capture_screen")
+    // Control de visibilidad del Drawer y TopAppBar en flujos de autenticación / carga
+    val isAuthOrSplash = currentRoute == null ||
+            currentRoute.startsWith(AppDestinations.Splash.route) ||
+            currentRoute.startsWith(AppDestinations.Login.route) ||
+            currentRoute.startsWith(AppDestinations.Register.route) ||
+            currentRoute.startsWith("camera_capture_screen")
+
+    val showDrawer = !isAuthOrSplash
+
+    // Determina el título actual de la barra superior
+    val currentTitle = when {
+        currentRoute == AppDestinations.Reparaciones.route -> AppDestinations.Reparaciones.title
+        currentRoute == AppDestinations.Inventario.route -> AppDestinations.Inventario.title
+        currentRoute == AppDestinations.Configuracion.route -> AppDestinations.Configuracion.title
+        currentRoute?.startsWith("detalle_reparacion_screen") == true -> AppDestinations.DetalleReparacion.title
+        else -> ""
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -67,9 +82,36 @@ fun AppNavigation(
             }
         }
     ) {
-    }
         Scaffold(
-            modifier = modifier.fillMaxSize()
+            modifier = modifier.fillMaxSize(),
+            topBar = {
+                if (showDrawer) {
+                    val canNavigateBack = currentRoute?.startsWith("detalle_reparacion_screen") == true
+                    BitacoraTopAppBar(
+                        title = currentTitle,
+                        canNavigateBack = canNavigateBack,
+                        onNavigationClick = {
+                            if (canNavigateBack) {
+                                navController.navigateUp()
+                            } else {
+                                coroutineScope.launch { drawerState.open() }
+                            }
+                        },
+                        actions = {
+                            if (currentRoute == AppDestinations.Reparaciones.route ||
+                                currentRoute == AppDestinations.Inventario.route
+                            ) {
+                                IconButton(onClick = { /* Búsqueda local */ }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Buscar registro"
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+            }
         ) { innerPadding ->
             NavHost(
                 navController = navController,
@@ -121,9 +163,9 @@ fun AppNavigation(
                         }
                     )
                 ) {
-
                     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
                 }
             }
         }
     }
+}
