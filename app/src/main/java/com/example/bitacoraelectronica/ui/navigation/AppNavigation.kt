@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.bitacoraelectronica.ui.components.AppDrawerContent
 import com.example.bitacoraelectronica.ui.components.BitacoraTopAppBar
+import com.example.bitacoraelectronica.ui.screens.InventarioScreen
 import com.example.bitacoraelectronica.ui.screens.LoginScreen
 import com.example.bitacoraelectronica.ui.screens.RegisterScreen
 import com.example.bitacoraelectronica.ui.screens.ReparacionesScreen
@@ -143,7 +144,11 @@ fun AppNavigation(
                 }
 
                 composable(route = AppDestinations.Inventario.route) {
-                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                    InventarioScreen(
+                        onNavigateToNuevoComponente = {
+                            // Se enlazará con el modal o diálogo de nuevo componente
+                        }
+                    )
                 }
 
                 composable(route = AppDestinations.Configuracion.route) {
