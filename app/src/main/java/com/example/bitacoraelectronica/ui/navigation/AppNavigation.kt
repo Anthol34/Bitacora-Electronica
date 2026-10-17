@@ -1,7 +1,5 @@
 package com.example.bitacoraelectronica.ui.navigation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -9,7 +7,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
@@ -25,14 +22,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.bitacoraelectronica.ui.components.AppDrawerContent
 import com.example.bitacoraelectronica.ui.components.BitacoraTopAppBar
+import com.example.bitacoraelectronica.ui.screens.CameraCaptureScreen
 import com.example.bitacoraelectronica.ui.screens.ConfiguracionScreen
 import com.example.bitacoraelectronica.ui.screens.DetalleReparacionScreen
 import com.example.bitacoraelectronica.ui.screens.InventarioScreen
 import com.example.bitacoraelectronica.ui.screens.LoginScreen
+import com.example.bitacoraelectronica.ui.screens.NuevoRegistroScreen
 import com.example.bitacoraelectronica.ui.screens.RegisterScreen
 import com.example.bitacoraelectronica.ui.screens.ReparacionesScreen
 import com.example.bitacoraelectronica.ui.screens.SplashScreen
-import com.example.bitacoraelectronica.ui.screens.CameraCaptureScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -127,13 +125,20 @@ fun AppNavigation(
                 composable(route = AppDestinations.Reparaciones.route) {
                     ReparacionesScreen(
                         onNavigateToNuevoRegistro = {
-                            // En el Commit 42 se conectará con AppDestinations.NuevoRegistro.route
+                            navController.navigate(AppDestinations.NuevoRegistro.route)
                         },
                         onNavigateToDetalle = { reparacionId ->
                             navController.navigate(
                                 AppDestinations.DetalleReparacion.createRoute(reparacionId)
                             )
                         }
+                    )
+                }
+
+                composable(route = AppDestinations.NuevoRegistro.route) {
+                    NuevoRegistroScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onRegistroGuardado = { navController.popBackStack() }
                     )
                 }
 
