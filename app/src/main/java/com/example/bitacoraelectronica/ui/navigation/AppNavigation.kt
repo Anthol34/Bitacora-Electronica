@@ -26,6 +26,7 @@ import androidx.navigation.navArgument
 import com.example.bitacoraelectronica.ui.components.AppDrawerContent
 import com.example.bitacoraelectronica.ui.components.BitacoraTopAppBar
 import com.example.bitacoraelectronica.ui.screens.ConfiguracionScreen
+import com.example.bitacoraelectronica.ui.screens.DetalleReparacionScreen
 import com.example.bitacoraelectronica.ui.screens.InventarioScreen
 import com.example.bitacoraelectronica.ui.screens.LoginScreen
 import com.example.bitacoraelectronica.ui.screens.RegisterScreen
@@ -44,21 +45,16 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Control de visibilidad del Drawer y TopAppBar en flujos de autenticación / carga
-    val isAuthOrSplash = currentRoute == null ||
-            currentRoute.startsWith(AppDestinations.Splash.route) ||
-            currentRoute.startsWith(AppDestinations.Login.route) ||
-            currentRoute.startsWith(AppDestinations.Register.route) ||
-            currentRoute.startsWith("camera_capture_screen")
-
-    val showDrawer = !isAuthOrSplash
+    // Mostrar el Drawer únicamente en las pantallas principales del menú lateral
+    val showDrawer = currentRoute == AppDestinations.Reparaciones.route ||
+            currentRoute == AppDestinations.Inventario.route ||
+            currentRoute == AppDestinations.Configuracion.route
 
     // Determina el título actual de la barra superior
-    val currentTitle = when {
-        currentRoute == AppDestinations.Reparaciones.route -> AppDestinations.Reparaciones.title
-        currentRoute == AppDestinations.Inventario.route -> AppDestinations.Inventario.title
-        currentRoute == AppDestinations.Configuracion.route -> AppDestinations.Configuracion.title
-        currentRoute?.startsWith("detalle_reparacion_screen") == true -> AppDestinations.DetalleReparacion.title
+    val currentTitle = when (currentRoute) {
+        AppDestinations.Reparaciones.route -> AppDestinations.Reparaciones.title
+        AppDestinations.Inventario.route -> AppDestinations.Inventario.title
+        AppDestinations.Configuracion.route -> AppDestinations.Configuracion.title
         else -> ""
     }
 
@@ -88,28 +84,22 @@ fun AppNavigation(
         Scaffold(
             modifier = modifier.fillMaxSize(),
             topBar = {
-                if (showDrawer) {
-                    val canNavigateBack = currentRoute?.startsWith("detalle_reparacion_screen") == true
+                // Solo mostramos BitacoraTopAppBar en las vistas que no tienen su propio TopAppBar interno
+                if (currentRoute == AppDestinations.Reparaciones.route ||
+                    currentRoute == AppDestinations.Inventario.route
+                ) {
                     BitacoraTopAppBar(
                         title = currentTitle,
-                        canNavigateBack = canNavigateBack,
+                        canNavigateBack = false,
                         onNavigationClick = {
-                            if (canNavigateBack) {
-                                navController.navigateUp()
-                            } else {
-                                coroutineScope.launch { drawerState.open() }
-                            }
+                            coroutineScope.launch { drawerState.open() }
                         },
                         actions = {
-                            if (currentRoute == AppDestinations.Reparaciones.route ||
-                                currentRoute == AppDestinations.Inventario.route
-                            ) {
-                                IconButton(onClick = { /* Búsqueda local */ }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Search,
-                                        contentDescription = "Buscar registro"
-                                    )
-                                }
+                            IconButton(onClick = { /* Búsqueda local */ }) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Buscar registro"
+                                )
                             }
                         }
                     )
@@ -136,27 +126,23 @@ fun AppNavigation(
                 composable(route = AppDestinations.Reparaciones.route) {
                     ReparacionesScreen(
                         onNavigateToNuevoRegistro = {
-                            navController.navigate(AppDestinations.DetalleReparacion.createRoute(0L))
+                            // En el Commit 42 se conectará con AppDestinations.NuevoRegistro.route
                         },
                         onNavigateToDetalle = { reparacionId ->
-                            navController.navigate(AppDestinations.DetalleReparacion.createRoute(reparacionId))
+                            navController.navigate(
+                                AppDestinations.DetalleReparacion.createRoute(reparacionId)
+                            )
                         }
                     )
                 }
 
                 composable(route = AppDestinations.Inventario.route) {
-                    InventarioScreen(
-                        onNavigateToNuevoComponente = {
-                            // Se enlazará con el modal o diálogo de nuevo componente
-                        }
-                    )
+                    InventarioScreen()
                 }
 
                 composable(route = AppDestinations.Configuracion.route) {
                     ConfiguracionScreen(
-                        onExportDatabaseClick = {
-                            // Se enlazará con la utilidad de exportación SQLite
-                        }
+                        onMenuClick = { coroutineScope.launch { drawerState.open() } }
                     )
                 }
 
@@ -165,11 +151,20 @@ fun AppNavigation(
                     arguments = listOf(
                         navArgument(AppDestinations.DetalleReparacion.ARG_REPARACION_ID) {
                             type = NavType.LongType
-                            defaultValue = 0L
+                            nullable = false
                         }
                     )
-                ) {
-                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                ) { backStackEntry ->
+                    val reparacionId = backStackEntry.arguments
+                        ?.getLong(AppDestinations.DetalleReparacion.ARG_REPARACION_ID) ?: 0L
+
+                    DetalleReparacionScreen(
+                        reparacionId = reparacionId,
+                        onBackClick = { navController.popBackStack() },
+                        onTomarFotoClick = { id ->
+                            navController.navigate(AppDestinations.CameraCapture.createRoute(id))
+                        }
+                    )
                 }
 
                 composable(
@@ -181,7 +176,12 @@ fun AppNavigation(
                         }
                     )
                 ) {
-                    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                    // En el Commit 41 se conectará CameraCaptureScreen
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                    )
                 }
             }
         }

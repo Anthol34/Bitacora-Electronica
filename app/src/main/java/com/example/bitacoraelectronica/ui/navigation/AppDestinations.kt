@@ -38,6 +38,11 @@ sealed class AppDestinations(
         icon = Icons.Default.Build
     )
 
+    data object NuevoRegistro : AppDestinations(
+        route = "nuevo_registro_screen",
+        title = "Nueva Ficha Técnica"
+    )
+
     data object Inventario : AppDestinations(
         route = "inventario_screen",
         title = "Inventario",
@@ -50,7 +55,7 @@ sealed class AppDestinations(
         icon = Icons.Default.Settings
     )
 
-    // Destinos de detalle y captura nativa de evidencia
+    // Destinos dinámicos parametrizados por identificador
     data object DetalleReparacion : AppDestinations(
         route = "detalle_reparacion_screen/{reparacionId}",
         title = "Detalle de Reparación"
@@ -74,7 +79,6 @@ sealed class AppDestinations(
     }
 
     companion object {
-        // Colección de destinos que se mostrarán en el menú lateral de Material 3
         val drawerDestinations = listOf(
             Reparaciones,
             Inventario,

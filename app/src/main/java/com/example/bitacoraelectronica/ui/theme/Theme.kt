@@ -47,7 +47,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun BitacoraTheme(
+fun BitacoraElectronicaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false, // Desactivado por defecto para priorizar la identidad visual del proyecto
     content: @Composable () -> Unit
