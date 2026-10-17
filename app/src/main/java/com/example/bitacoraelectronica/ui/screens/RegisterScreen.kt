@@ -1,20 +1,25 @@
 package com.example.bitacoraelectronica.ui.screens
 
+import android.util.Patterns
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -23,7 +28,9 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,21 +39,27 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.bitacoraelectronica.ui.navigation.AppDestinations
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,32 +67,69 @@ fun RegisterScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var specialty by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var isPasswordVisible by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val especialidades = listOf(
+        "Microelectrónica SMD",
+        "Fuentes Conmutadas",
+        "Placas Madre / Laptops",
+        " Instrumentación y Audio"
+    )
+
+    var nombreCompleto by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var especialidadSeleccionada by rememberSaveable { mutableStateOf(especialidades.first()) }
+    var password by rememberSaveable { mutableStateOf("") }
+    var confirmPassword by rememberSaveable { mutableStateOf("") }
+
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var confirmPasswordVisible by rememberSaveable { mutableStateOf(false) }
+
+    var nombreError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+    var isRegistering by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
 
-    val onRegisterAttempt = {
+    fun validarYRegistrar() {
         focusManager.clearFocus()
-        when {
-            fullName.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() -> {
-                errorMessage = "Por favor complete todos los campos obligatorios"
-            }
-            password != confirmPassword -> {
-                errorMessage = "Las contraseñas no coinciden"
-            }
-            password.length < 6 -> {
-                errorMessage = "La contraseña debe tener un mínimo de 6 caracteres"
-            }
-            else -> {
-                errorMessage = null
-                // Registro local exitoso: retorna a la pantalla de Login
-                navController.popBackStack()
+        val trimmedNombre = nombreCompleto.trim()
+        val trimmedEmail = email.trim()
+
+        nombreError = if (trimmedNombre.length < 3) {
+            "Ingrese su nombre o alias técnico (mínimo 3 caracteres)"
+        } else null
+
+        emailError = when {
+            trimmedEmail.isEmpty() -> "Ingrese un correo electrónico"
+            !Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches() -> "Formato de correo inválido"
+            else -> null
+        }
+
+        passwordError = when {
+            password.length < 4 -> "La contraseña debe tener al menos 4 caracteres"
+            else -> null
+        }
+
+        confirmPasswordError = when {
+            confirmPassword.isEmpty() -> "Confirme su contraseña"
+            confirmPassword != password -> "Las contraseñas no coinciden"
+            else -> null
+        }
+
+        if (nombreError == null && emailError == null &&
+            passwordError == null && confirmPasswordError == null
+        ) {
+            isRegistering = true
+            coroutineScope.launch {
+                delay(350L)
+                isRegistering = false
+                navController.navigate(AppDestinations.Reparaciones.route) {
+                    popUpTo(AppDestinations.Login.route) {
+                        inclusive = true
+                    }
+                }
             }
         }
     }
@@ -87,49 +137,56 @@ fun RegisterScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Registro de Técnico") },
+                title = { Text("Registro de Técnico") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver atrás"
+                            contentDescription = "Volver a Iniciar Sesión"
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
+                }
             )
-        }
+        },
+        modifier = modifier
     ) { innerPadding ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Icon(
+                imageVector = Icons.Default.Badge,
+                contentDescription = "Perfil de técnico electrónico",
+                modifier = Modifier.size(56.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
-                text = "Crear Cuenta de Técnico",
-                style = MaterialTheme.typography.headlineSmall,
+                text = "Configurar Perfil de Banco",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
             Text(
-                text = "Bitácora personal y gestión de banco de pruebas",
+                text = "Tus datos se almacenan localmente en el dispositivo",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
@@ -139,154 +196,201 @@ fun RegisterScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedTextField(
-                        value = fullName,
+                        value = nombreCompleto,
                         onValueChange = {
-                            fullName = it
-                            if (errorMessage != null) errorMessage = null
+                            nombreCompleto = it
+                            nombreError = null
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Nombre y Apellido") },
+                        label = { Text("Nombre del Técnico *") },
+                        placeholder = { Text("Ej. Ing. Carlos Mendoza") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Person, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null
+                            )
                         },
-                        singleLine = true,
+                        isError = nombreError != null,
+                        supportingText = { nombreError?.let { Text(it) } },
                         keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Next
                         ),
-                        shape = MaterialTheme.shapes.medium
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
-
-                    Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedTextField(
                         value = email,
                         onValueChange = {
                             email = it
-                            if (errorMessage != null) errorMessage = null
+                            emailError = null
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Correo Institucional o Personal") },
+                        label = { Text("Correo Electrónico *") },
+                        placeholder = { Text("tecnico@bitacora.local") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Email, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null
+                            )
                         },
-                        singleLine = true,
+                        isError = emailError != null,
+                        supportingText = { emailError?.let { Text(it) } },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
                             imeAction = ImeAction.Next
                         ),
-                        shape = MaterialTheme.shapes.medium
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    OutlinedTextField(
-                        value = specialty,
-                        onValueChange = { specialty = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Área de Especialidad (Opcional)") },
-                        placeholder = { Text("ej. Fuentes conmutadas, Laptops") },
-                        leadingIcon = {
-                            Icon(imageVector = Icons.Default.Build, contentDescription = null)
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
                         ),
-                        shape = MaterialTheme.shapes.medium
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        text = "Área de Especialidad Técnica",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        especialidades.forEach { esp ->
+                            val selected = especialidadSeleccionada == esp
+                            FilterChip(
+                                selected = selected,
+                                onClick = { especialidadSeleccionada = esp },
+                                label = { Text(esp.trim()) },
+                                leadingIcon = if (selected) {
+                                    { Icon(Icons.Default.Check, contentDescription = null) }
+                                } else null
+                            )
+                        }
+                    }
 
                     OutlinedTextField(
                         value = password,
                         onValueChange = {
                             password = it
-                            if (errorMessage != null) errorMessage = null
+                            passwordError = null
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Contraseña") },
+                        label = { Text("Contraseña *") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Lock, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null
+                            )
                         },
                         trailingIcon = {
-                            IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = if (isPasswordVisible) "Ocultar" else "Mostrar"
+                                    imageVector = if (passwordVisible) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = "Alternar visibilidad de contraseña"
                                 )
                             }
                         },
-                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        singleLine = true,
+                        visualTransformation = if (passwordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        isError = passwordError != null,
+                        supportingText = { passwordError?.let { Text(it) } },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Next
                         ),
-                        shape = MaterialTheme.shapes.medium
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
-
-                    Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = {
                             confirmPassword = it
-                            if (errorMessage != null) errorMessage = null
+                            confirmPasswordError = null
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Confirmar Contraseña") },
+                        label = { Text("Confirmar Contraseña *") },
                         leadingIcon = {
-                            Icon(imageVector = Icons.Default.Lock, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null
+                            )
                         },
-                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = "Alternar visibilidad de confirmación"
+                                )
+                            }
+                        },
+                        visualTransformation = if (confirmPasswordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        isError = confirmPasswordError != null,
+                        supportingText = { confirmPasswordError?.let { Text(it) } },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password,
                             imeAction = ImeAction.Done
                         ),
-                        keyboardActions = KeyboardActions(onDone = { onRegisterAttempt() }),
-                        shape = MaterialTheme.shapes.medium
+                        keyboardActions = KeyboardActions(
+                            onDone = { validarYRegistrar() }
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
-                    if (errorMessage != null) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = errorMessage ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Button(
-                        onClick = {onRegisterAttempt()},
+                        onClick = { validarYRegistrar() },
+                        enabled = !isRegistering,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
-                        shape = MaterialTheme.shapes.medium
+                            .height(48.dp)
                     ) {
-                        Text(text = "Registrar Cuenta", style = MaterialTheme.typography.titleMedium)
+                        if (isRegistering) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Crear Perfil y Acceder")
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            TextButton(
-                onClick = { navController.popBackStack() }
-            ) {
-                Text(
-                    text = "¿Ya tienes cuenta registrada? Inicia sesión",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            TextButton(onClick = { navController.popBackStack() }) {
+                Text("¿Ya tienes perfil registrado? Inicia sesión")
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
