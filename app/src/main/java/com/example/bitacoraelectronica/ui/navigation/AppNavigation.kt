@@ -32,6 +32,7 @@ import com.example.bitacoraelectronica.ui.screens.LoginScreen
 import com.example.bitacoraelectronica.ui.screens.RegisterScreen
 import com.example.bitacoraelectronica.ui.screens.ReparacionesScreen
 import com.example.bitacoraelectronica.ui.screens.SplashScreen
+import com.example.bitacoraelectronica.ui.screens.CameraCaptureScreen
 import kotlinx.coroutines.launch
 
 @Composable
@@ -166,21 +167,27 @@ fun AppNavigation(
                         }
                     )
                 }
-
                 composable(
                     route = AppDestinations.CameraCapture.route,
                     arguments = listOf(
                         navArgument(AppDestinations.CameraCapture.ARG_REPARACION_ID) {
                             type = NavType.LongType
-                            defaultValue = 0L
+                            nullable = false
                         }
                     )
-                ) {
-                    // En el Commit 41 se conectará CameraCaptureScreen
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background)
+                ) { backStackEntry ->
+                    val reparacionId = backStackEntry.arguments
+                        ?.getLong(AppDestinations.CameraCapture.ARG_REPARACION_ID) ?: 0L
+
+                    CameraCaptureScreen(
+                        reparacionId = reparacionId,
+                        onPhotoCaptured = { uri ->
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("captured_photo_uri", uri.toString())
+                            navController.popBackStack()
+                        },
+                        onBackClick = { navController.popBackStack() }
                     )
                 }
             }
