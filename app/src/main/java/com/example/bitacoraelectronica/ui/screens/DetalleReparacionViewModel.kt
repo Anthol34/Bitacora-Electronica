@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.bitacoraelectronica.BitacoraApplication
-import com.example.bitacoraelectronica.data.local.entity.ReparacionEntity
 import com.example.bitacoraelectronica.data.repository.IComponenteRepository
 import com.example.bitacoraelectronica.data.repository.IReparacionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +56,21 @@ class DetalleReparacionViewModel(
         }
     }
 
+    fun actualizarFotoEvidencia(nuevaUri: String) {
+        val reparacionActual = uiState.value.reparacionConComponentes?.reparacion ?: return
+        viewModelScope.launch {
+            try {
+                // Si en ReparacionEntity tu propiedad se llama fotoEvidenciaUri,
+                // cambia "fotoUri = nuevaUri" por "fotoEvidenciaUri = nuevaUri"
+                reparacionRepository.updateReparacion(
+                    reparacionActual.copy(fotoEvidenciaUri = nuevaUri)
+                )
+            } catch (e: Exception) {
+                _errorMessage.value = "Error al guardar la foto: ${e.message}"
+            }
+        }
+    }
+
     fun guardarDatosTecnicos(
         equipo: String,
         marcaModelo: String,
@@ -77,7 +91,7 @@ class DetalleReparacionViewModel(
                     diagnostico = diagnostico,
                     medicionesTecnicas = medicionesTecnicas,
                     costoEstimado = costoEstimado,
-                    fotoUri = fotoUri ?: reparacionActual.fotoUri
+                    fotoEvidenciaUri = fotoUri ?: reparacionActual.fotoEvidenciaUri
                 )
             )
             _isSaving.value = false

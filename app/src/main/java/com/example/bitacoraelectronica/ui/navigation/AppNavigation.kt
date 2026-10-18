@@ -164,14 +164,19 @@ fun AppNavigation(
                     val reparacionId = backStackEntry.arguments
                         ?.getLong(AppDestinations.DetalleReparacion.ARG_REPARACION_ID) ?: 0L
 
+                    val capturedPhotoUri = backStackEntry.savedStateHandle
+                        .get<String>("captured_photo_uri")
+
                     DetalleReparacionScreen(
                         reparacionId = reparacionId,
                         onBackClick = { navController.popBackStack() },
                         onTomarFotoClick = { id ->
                             navController.navigate(AppDestinations.CameraCapture.createRoute(id))
-                        }
+                        },
+                        capturedPhotoUri = capturedPhotoUri
                     )
                 }
+
                 composable(
                     route = AppDestinations.CameraCapture.route,
                     arguments = listOf(
