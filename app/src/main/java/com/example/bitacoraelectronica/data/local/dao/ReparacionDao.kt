@@ -28,7 +28,7 @@ interface ReparacionDao {
     suspend fun deleteReparacion(reparacion: ReparacionEntity)
 
     @Query("DELETE FROM reparaciones WHERE id = :id")
-    suspend fun deleteReparacionById(id: Long)
+    suspend fun deleteReparacionById(id: Long): Int
 
     @Query("SELECT * FROM reparaciones ORDER BY fecha_ingreso DESC")
     fun getAllReparaciones(): Flow<List<ReparacionEntity>>

@@ -10,7 +10,6 @@ import com.example.bitacoraelectronica.data.di.DefaultAppContainer
  */
 class BitacoraApplication : Application() {
 
-    /** Contenedor de dependencias que centraliza el acceso a la base de datos y preferencias */
     lateinit var container: AppContainer
 
     override fun onCreate() {

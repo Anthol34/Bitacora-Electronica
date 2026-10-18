@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.bitacoraelectronica"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.bitacoraelectronica"

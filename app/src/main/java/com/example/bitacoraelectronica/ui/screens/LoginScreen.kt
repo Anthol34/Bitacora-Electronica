@@ -1,5 +1,7 @@
 package com.example.bitacoraelectronica.ui.screens
 
+import android.util.Patterns
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,16 +17,18 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,10 +36,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -43,33 +51,56 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.bitacoraelectronica.ui.navigation.AppDestinations
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var isPasswordVisible by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+    var generalError by remember { mutableStateOf<String?>(null) }
+    var isAuthenticating by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
 
-    val onLoginAttempt = {
+    fun validateAndLogin() {
         focusManager.clearFocus()
-        if (username.isBlank() || password.isBlank()) {
-            errorMessage = "Complete todos los campos requeridos"
-        } else if (password.length < 4) {
-            errorMessage = "La contraseña debe tener al menos 4 caracteres"
-        } else {
-            errorMessage = null
-            // Navegación hacia el dashboard principal de Reparaciones
-            navController.navigate(AppDestinations.Reparaciones.route) {
-                popUpTo(AppDestinations.Login.route) {
-                    inclusive = true
+        val trimmedEmail = email.trim()
+
+        emailError = when {
+            trimmedEmail.isEmpty() -> "Ingrese su correo electrónico de técnico"
+            !Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches() -> "Formato de correo electrónico no válido"
+            else -> null
+        }
+
+        passwordError = when {
+            password.isEmpty() -> "Ingrese su contraseña"
+            password.length < 4 -> "La contraseña debe tener al menos 4 caracteres"
+            else -> null
+        }
+
+        if (emailError == null && passwordError == null) {
+            generalError = null
+            isAuthenticating = true
+            coroutineScope.launch {
+                delay(350L)
+                isAuthenticating = false
+                navController.navigate(AppDestinations.Reparaciones.route) {
+                    popUpTo(AppDestinations.Login.route) {
+                        inclusive = true
+                    }
                 }
             }
+        } else {
+            generalError = "Verifique los campos marcados para continuar."
         }
     }
 
@@ -77,14 +108,16 @@ fun LoginScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 32.dp),
+            .padding(horizontal = 24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Spacer(modifier = Modifier.height(32.dp))
+
         Icon(
             imageVector = Icons.Default.Build,
-            contentDescription = null,
+            contentDescription = "Logotipo de Bitácora Electrónica",
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
         )
@@ -92,22 +125,22 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Acceso de Técnico",
+            text = "Bitácora Electrónica",
             style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
-            text = "Sistema de Gestión de Taller Electrónico",
+            text = "Acceso al Banco de Diagnóstico Local",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
@@ -117,95 +150,140 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedTextField(
-                    value = username,
+                    value = email,
                     onValueChange = {
-                        username = it
-                        if (errorMessage != null) errorMessage = null
+                        email = it
+                        emailError = null
+                        generalError = null
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Identificador o Usuario") },
+                    label = { Text("Correo electrónico") },
+                    placeholder = { Text("tecnico@taller.local") },
                     leadingIcon = {
-                        Icon(imageVector = Icons.Default.Person, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Icono de correo"
+                        )
                     },
-                    singleLine = true,
-                    isError = errorMessage != null && username.isBlank(),
+                    isError = emailError != null,
+                    supportingText = {
+                        emailError?.let { Text(it) }
+                    },
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
+                        keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
-                    shape = MaterialTheme.shapes.medium
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = password,
                     onValueChange = {
                         password = it
-                        if (errorMessage != null) errorMessage = null
+                        passwordError = null
+                        generalError = null
                     },
-                    modifier = Modifier.fillMaxWidth(),
                     label = { Text("Contraseña") },
                     leadingIcon = {
-                        Icon(imageVector = Icons.Default.Lock, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Icono de contraseña"
+                        )
                     },
                     trailingIcon = {
-                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
-                                imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = if (isPasswordVisible) "Ocultar clave" else "Mostrar clave"
+                                imageVector = if (passwordVisible) {
+                                    Icons.Default.VisibilityOff
+                                } else {
+                                    Icons.Default.Visibility
+                                },
+                                contentDescription = if (passwordVisible) {
+                                    "Ocultar contraseña"
+                                } else {
+                                    "Mostrar contraseña"
+                                }
                             )
                         }
                     },
-                    visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    singleLine = true,
-                    isError = errorMessage != null && password.isBlank(),
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    isError = passwordError != null,
+                    supportingText = {
+                        passwordError?.let { Text(it) }
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
-                    keyboardActions = KeyboardActions(onDone = { onLoginAttempt() }),
-                    shape = MaterialTheme.shapes.medium
+                    keyboardActions = KeyboardActions(
+                        onDone = { validateAndLogin() }
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                AnimatedVisibility(visible = generalError != null) {
                     Text(
-                        text = errorMessage ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
+                        text = generalError.orEmpty(),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Button(
-                    onClick = onLoginAttempt,
+                    onClick = { validateAndLogin() },
+                    enabled = !isAuthenticating,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    shape = MaterialTheme.shapes.medium
+                        .height(48.dp)
                 ) {
-                    Text(text = "Iniciar Sesión", style = MaterialTheme.typography.titleMedium)
+                    if (isAuthenticating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Ingresar al Taller")
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        email = "tecnico@bitacora.local"
+                        password = "admin"
+                        validateAndLogin()
+                    },
+                    enabled = !isAuthenticating,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Acceso Rápido Offline (Modo Técnico)")
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         TextButton(
             onClick = {
                 navController.navigate(AppDestinations.Register.route)
             }
         ) {
-            Text(
-                text = "¿No tienes cuenta de técnico? Regístrate aquí",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Text("¿No tienes cuenta de técnico? Regístrate aquí")
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }

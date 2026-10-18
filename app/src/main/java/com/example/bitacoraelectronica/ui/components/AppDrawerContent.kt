@@ -91,7 +91,7 @@ fun AppDrawerContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Lista de destinos principales del Navigation Drawer
-        AppDestinations.drawerDestinations.forEach { destination ->
+        AppDestinations.drawerDestinations.filterNotNull().forEach { destination ->
             val isSelected = currentRoute == destination.route
             NavigationDrawerItem(
                 label = {

@@ -23,7 +23,7 @@ interface ReparacionComponenteDao {
         WHERE reparacion_id = :reparacionId AND componente_id = :componenteId
         """
     )
-    suspend fun removeComponenteFromReparacion(reparacionId: Long, componenteId: Long)
+    suspend fun removeComponenteFromReparacion(reparacionId: Long, componenteId: Long): Int
 
     @Query(
         """

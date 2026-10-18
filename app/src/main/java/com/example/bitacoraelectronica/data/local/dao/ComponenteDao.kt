@@ -29,7 +29,7 @@ interface ComponenteDao {
     suspend fun deleteComponente(componente: ComponenteEntity)
 
     @Query("DELETE FROM componentes WHERE id = :id")
-    suspend fun deleteComponenteById(id: Long)
+    suspend fun deleteComponenteById(id: Long): Int
 
     @Query("SELECT * FROM componentes ORDER BY nombre ASC")
     fun getAllComponentes(): Flow<List<ComponenteEntity>>
@@ -70,7 +70,7 @@ interface ComponenteDao {
         WHERE id = :componenteId
         """
     )
-    suspend fun addStock(componenteId: Long, cantidad: Int)
+    suspend fun addStock(componenteId: Long, cantidad: Int): Int
 
     @Query("SELECT * FROM componentes WHERE cantidad_stock <= :limiteMinimo ORDER BY cantidad_stock ASC")
     fun getComponentesLowStock(limiteMinimo: Int = 3): Flow<List<ComponenteEntity>>

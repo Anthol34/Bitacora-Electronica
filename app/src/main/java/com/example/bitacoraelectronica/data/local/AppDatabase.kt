@@ -10,9 +10,6 @@ import com.example.bitacoraelectronica.data.local.dao.ReparacionDao
 import com.example.bitacoraelectronica.data.local.entity.ComponenteEntity
 import com.example.bitacoraelectronica.data.local.entity.ReparacionComponenteEntity
 import com.example.bitacoraelectronica.data.local.entity.ReparacionEntity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 
 @Database(
     entities = [
@@ -35,18 +32,16 @@ abstract class AppDatabase : RoomDatabase() {
 
         const val DATABASE_NAME = "bitacora_electronica.db"
 
-        fun getDatabase(
-            context: Context,
-            scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        ): AppDatabase {
+        fun getDatabase(context: Context): AppDatabase {
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(
+                Instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     DATABASE_NAME
                 )
+                    .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                     .fallbackToDestructiveMigration()
-                    .addCallback(DatabaseCallback(scope) { getDatabase(context, scope) })
+                    .addCallback(DatabaseCallback())
                     .build()
                     .also { Instance = it }
             }

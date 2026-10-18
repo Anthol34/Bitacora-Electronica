@@ -1,5 +1,6 @@
 package com.example.bitacoraelectronica.ui.screens
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -8,6 +9,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.bitacoraelectronica.BitacoraApplication
 import com.example.bitacoraelectronica.data.repository.ISettingsRepository
+import com.example.bitacoraelectronica.utils.DatabaseBackupHelper
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -21,19 +24,26 @@ class SettingsViewModel(
     private val settingsRepository: ISettingsRepository
 ) : ViewModel() {
 
+    private val _isExportingBackup = MutableStateFlow(false)
+    private val _backupMessage = MutableStateFlow<String?>(null)
+
     /**
-     * Flujo caliente de estado que consolida todas las preferencias de DataStore.
+     * Flujo caliente de estado que consolida todas las preferencias de DataStore y el estado del respaldo.
      */
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.isDarkModeStream,
         settingsRepository.fontSizeStream,
-        settingsRepository.lastBackupTimestampStream
-    ) { isDarkMode, fontSize, lastBackup ->
+        settingsRepository.lastBackupTimestampStream,
+        _isExportingBackup,
+        _backupMessage
+    ) { isDarkMode, fontSize, lastBackup, isExporting, message ->
         SettingsUiState(
             isDarkMode = isDarkMode,
             fontSize = fontSize,
             lastBackupTimestamp = lastBackup,
-            isLoading = false
+            isLoading = false,
+            isExportingBackup = isExporting,
+            backupMessage = message
         )
     }.stateIn(
         scope = viewModelScope,
@@ -53,6 +63,9 @@ class SettingsViewModel(
         }
     }
 
+    /**
+     * Registra la fecha actual del respaldo en DataStore (respaldo rápido de marca de tiempo).
+     */
     fun triggerBackupExport() {
         viewModelScope.launch {
             val currentFormattedDate = SimpleDateFormat(
@@ -60,7 +73,28 @@ class SettingsViewModel(
                 Locale.getDefault()
             ).format(Date())
             settingsRepository.updateLastBackupTimestamp(currentFormattedDate)
+            _backupMessage.value = "Marca de respaldo actualizada ($currentFormattedDate)"
         }
+    }
+
+    /**
+     * Exporta físicamente el archivo SQLite (.db) al almacenamiento aislado de la app
+     * y actualiza la fecha del último respaldo en DataStore.
+     */
+    fun exportDatabaseToLocalFile(context: Context) {
+        viewModelScope.launch {
+            _isExportingBackup.value = true
+            val result = DatabaseBackupHelper.exportDatabaseFile(context)
+            if (result.success && result.formattedTimestamp.isNotBlank()) {
+                settingsRepository.updateLastBackupTimestamp(result.formattedTimestamp)
+            }
+            _backupMessage.value = result.message
+            _isExportingBackup.value = false
+        }
+    }
+
+    fun clearBackupMessage() {
+        _backupMessage.value = null
     }
 
     companion object {

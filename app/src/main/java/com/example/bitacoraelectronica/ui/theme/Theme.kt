@@ -58,7 +58,7 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 @Composable
-fun BitacoraTheme(
+fun BitacoraElectronicaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     fontSizePreference: String = "Media",
     dynamicColor: Boolean = false,
