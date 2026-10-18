@@ -38,7 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitacoraelectronica.data.local.entity.ReparacionEntity
 
-@OptIn(ExperimentalMaterial3Api::class)
+// 1. COMPOSABLE CONTENEDOR CON ESTADO (Stateful)
 @Composable
 fun NuevoRegistroScreen(
     onBackClick: () -> Unit,
@@ -47,14 +47,47 @@ fun NuevoRegistroScreen(
     viewModel: NuevoRegistroViewModel = viewModel(factory = NuevoRegistroViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val componentesStock by viewModel.componentesDisponibles.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.registroExitoso) {
         if (uiState.registroExitoso) {
             onRegistroGuardado()
         }
     }
+
+    NuevoRegistroContent(
+        uiState = uiState,
+        onBackClick = onBackClick,
+        onEquipoChanged = viewModel::onEquipoChanged,
+        onMarcaModeloChanged = viewModel::onMarcaModeloChanged,
+        onFallaReportadaChanged = viewModel::onFallaReportadaChanged,
+        onEstadoSelected = viewModel::onEstadoSelected,
+        onDiagnosticoChanged = viewModel::onDiagnosticoChanged,
+        onMedicionesChanged = viewModel::onMedicionesChanged,
+        onCostoChanged = viewModel::onCostoChanged,
+        onComponenteSelected = viewModel::onComponenteInicialSelected,
+        onGuardarClick = viewModel::guardarNuevoRegistro,
+        modifier = modifier
+    )
+}
+
+// 2. COMPOSABLE VISTA PURA SIN ESTADO (Stateless - No recibe ViewModel)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NuevoRegistroContent(
+    uiState: NuevoRegistroUiState,
+    onBackClick: () -> Unit,
+    onEquipoChanged: (String) -> Unit,
+    onMarcaModeloChanged: (String) -> Unit,
+    onFallaReportadaChanged: (String) -> Unit,
+    onEstadoSelected: (String) -> Unit,
+    onDiagnosticoChanged: (String) -> Unit,
+    onMedicionesChanged: (String) -> Unit,
+    onCostoChanged: (String) -> Unit,
+    onComponenteSelected: (Long?) -> Unit,
+    onGuardarClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { msg ->
@@ -91,7 +124,7 @@ fun NuevoRegistroScreen(
 
             OutlinedTextField(
                 value = uiState.equipo,
-                onValueChange = viewModel::onEquipoChanged,
+                onValueChange = onEquipoChanged,
                 label = { Text("Equipo / Dispositivo *") },
                 placeholder = { Text("Ej. Cargador Laptop, Fuente ATX") },
                 singleLine = true,
@@ -100,7 +133,7 @@ fun NuevoRegistroScreen(
 
             OutlinedTextField(
                 value = uiState.marcaModelo,
-                onValueChange = viewModel::onMarcaModeloChanged,
+                onValueChange = onMarcaModeloChanged,
                 label = { Text("Marca y Modelo *") },
                 placeholder = { Text("Ej. Dell 65W LA65NS2-01") },
                 singleLine = true,
@@ -109,7 +142,7 @@ fun NuevoRegistroScreen(
 
             OutlinedTextField(
                 value = uiState.fallaReportada,
-                onValueChange = viewModel::onFallaReportadaChanged,
+                onValueChange = onFallaReportadaChanged,
                 label = { Text("Falla Reportada *") },
                 placeholder = { Text("Ej. No entrega voltaje de salida, LED apagado") },
                 minLines = 2,
@@ -131,7 +164,7 @@ fun NuevoRegistroScreen(
                     val selected = uiState.estadoSeleccionado == estado
                     FilterChip(
                         selected = selected,
-                        onClick = { viewModel.onEstadoSelected(estado) },
+                        onClick = { onEstadoSelected(estado) },
                         label = { Text(estado) },
                         leadingIcon = if (selected) {
                             { Icon(Icons.Default.Check, contentDescription = null) }
@@ -142,7 +175,7 @@ fun NuevoRegistroScreen(
 
             OutlinedTextField(
                 value = uiState.diagnostico,
-                onValueChange = viewModel::onDiagnosticoChanged,
+                onValueChange = onDiagnosticoChanged,
                 label = { Text("Diagnóstico Preliminar") },
                 placeholder = { Text("Ej. Cortocircuito en etapa primaria") },
                 minLines = 2,
@@ -151,7 +184,7 @@ fun NuevoRegistroScreen(
 
             OutlinedTextField(
                 value = uiState.medicionesTecnicas,
-                onValueChange = viewModel::onMedicionesChanged,
+                onValueChange = onMedicionesChanged,
                 label = { Text("Mediciones con Multímetro / Osciloscopio") },
                 placeholder = { Text("Ej. V_in = 165V DC, V_out = 0V, Rizado = N/A") },
                 minLines = 2,
@@ -160,14 +193,14 @@ fun NuevoRegistroScreen(
 
             OutlinedTextField(
                 value = uiState.costoEstimado,
-                onValueChange = viewModel::onCostoChanged,
+                onValueChange = onCostoChanged,
                 label = { Text("Costo Estimado ($)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            if (componentesStock.isNotEmpty()) {
+            if (uiState.componentesDisponibles.isNotEmpty()) {
                 Text(
                     text = "Vincular Repuesto Inicial (Opcional)",
                     style = MaterialTheme.typography.titleMedium
@@ -178,25 +211,27 @@ fun NuevoRegistroScreen(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    componentesStock.filter { it.cantidadStock > 0 }.forEach { comp ->
-                        val isSelected = uiState.componenteInicialId == comp.id
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                viewModel.onComponenteInicialSelected(
-                                    if (isSelected) null else comp.id
-                                )
-                            },
-                            label = { Text("${comp.nombre} (Stock: ${comp.cantidadStock})") }
-                        )
-                    }
+                    uiState.componentesDisponibles
+                        .filter { it.cantidadStock > 0 }
+                        .forEach { comp ->
+                            val isSelected = uiState.componenteInicialId == comp.id
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    onComponenteSelected(
+                                        if (isSelected) null else comp.id
+                                    )
+                                },
+                                label = { Text("${comp.nombre} (Stock: ${comp.cantidadStock})") }
+                            )
+                        }
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Button(
-                onClick = viewModel::guardarNuevoRegistro,
+                onClick = onGuardarClick,
                 enabled = !uiState.isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {

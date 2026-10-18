@@ -14,7 +14,7 @@ import com.example.bitacoraelectronica.data.repository.IReparacionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -29,6 +29,7 @@ data class NuevoRegistroUiState(
     val costoEstimado: String = "",
     val componenteInicialId: Long? = null,
     val cantidadComponenteInicial: Int = 1,
+    val componentesDisponibles: List<ComponenteEntity> = emptyList(),
     val isSaving: Boolean = false,
     val registroExitoso: Boolean = false,
     val errorMessage: String? = null
@@ -39,60 +40,62 @@ class NuevoRegistroViewModel(
     componenteRepository: IComponenteRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(NuevoRegistroUiState())
-    val uiState: StateFlow<NuevoRegistroUiState> = _uiState.asStateFlow()
+    private val _formState = MutableStateFlow(NuevoRegistroUiState())
 
-    val componentesDisponibles: StateFlow<List<ComponenteEntity>> =
+    val uiState: StateFlow<NuevoRegistroUiState> = combine(
+        _formState,
         componenteRepository.getAllComponentesStream()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000L),
-                initialValue = emptyList()
-            )
+    ) { form, componentes ->
+        form.copy(componentesDisponibles = componentes)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000L),
+        initialValue = NuevoRegistroUiState()
+    )
 
     fun onEquipoChanged(value: String) {
-        _uiState.update { it.copy(equipo = value, errorMessage = null) }
+        _formState.update { it.copy(equipo = value, errorMessage = null) }
     }
 
     fun onMarcaModeloChanged(value: String) {
-        _uiState.update { it.copy(marcaModelo = value, errorMessage = null) }
+        _formState.update { it.copy(marcaModelo = value, errorMessage = null) }
     }
 
     fun onFallaReportadaChanged(value: String) {
-        _uiState.update { it.copy(fallaReportada = value, errorMessage = null) }
+        _formState.update { it.copy(fallaReportada = value, errorMessage = null) }
     }
 
     fun onDiagnosticoChanged(value: String) {
-        _uiState.update { it.copy(diagnostico = value) }
+        _formState.update { it.copy(diagnostico = value) }
     }
 
     fun onMedicionesChanged(value: String) {
-        _uiState.update { it.copy(medicionesTecnicas = value) }
+        _formState.update { it.copy(medicionesTecnicas = value) }
     }
 
     fun onEstadoSelected(estado: String) {
-        _uiState.update { it.copy(estadoSeleccionado = estado) }
+        _formState.update { it.copy(estadoSeleccionado = estado) }
     }
 
     fun onCostoChanged(value: String) {
-        _uiState.update { it.copy(costoEstimado = value) }
+        _formState.update { it.copy(costoEstimado = value) }
     }
 
     fun onComponenteInicialSelected(componenteId: Long?) {
-        _uiState.update { it.copy(componenteInicialId = componenteId) }
+        _formState.update { it.copy(componenteInicialId = componenteId) }
     }
 
     fun guardarNuevoRegistro() {
-        val state = _uiState.value
+        val state = _formState.value
         if (state.equipo.isBlank() || state.marcaModelo.isBlank() || state.fallaReportada.isBlank()) {
-            _uiState.update {
+            _formState.update {
                 it.copy(errorMessage = "Complete los campos obligatorios: Equipo, Marca/Modelo y Falla reportada.")
             }
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+            _formState.update { it.copy(isSaving = true, errorMessage = null) }
             try {
                 val costo = state.costoEstimado.toDoubleOrNull() ?: 0.0
                 val nuevaReparacion = ReparacionEntity(
@@ -107,7 +110,6 @@ class NuevoRegistroViewModel(
 
                 val nuevoId = reparacionRepository.insertReparacion(nuevaReparacion)
 
-                // Si se seleccionó un repuesto inicial, lo vinculamos y descontamos stock
                 state.componenteInicialId?.let { compId ->
                     reparacionRepository.asignarComponente(
                         reparacionId = nuevoId,
@@ -116,9 +118,9 @@ class NuevoRegistroViewModel(
                     )
                 }
 
-                _uiState.update { it.copy(isSaving = false, registroExitoso = true) }
+                _formState.update { it.copy(isSaving = false, registroExitoso = true) }
             } catch (e: Exception) {
-                _uiState.update {
+                _formState.update {
                     it.copy(
                         isSaving = false,
                         errorMessage = "Error al guardar la ficha técnica: ${e.message}"
