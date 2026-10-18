@@ -7,5 +7,7 @@ data class SettingsUiState(
     val isDarkMode: Boolean = false,
     val fontSize: String = "Media",
     val lastBackupTimestamp: String = "Sin copias previas",
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val isExportingBackup: Boolean = false,
+    val backupMessage: String? = null
 )

@@ -44,12 +44,11 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Mostrar el Drawer únicamente en las pantallas principales del menú lateral
+    // Mostrar el Drawer únicamente en las vistas principales del taller
     val showDrawer = currentRoute == AppDestinations.Reparaciones.route ||
             currentRoute == AppDestinations.Inventario.route ||
             currentRoute == AppDestinations.Configuracion.route
 
-    // Determina el título actual de la barra superior
     val currentTitle = when (currentRoute) {
         AppDestinations.Reparaciones.route -> AppDestinations.Reparaciones.title
         AppDestinations.Inventario.route -> AppDestinations.Inventario.title
@@ -83,7 +82,6 @@ fun AppNavigation(
         Scaffold(
             modifier = modifier.fillMaxSize(),
             topBar = {
-                // Solo mostramos BitacoraTopAppBar en las vistas que no tienen su propio TopAppBar interno
                 if (currentRoute == AppDestinations.Reparaciones.route ||
                     currentRoute == AppDestinations.Inventario.route
                 ) {
@@ -94,7 +92,7 @@ fun AppNavigation(
                             coroutineScope.launch { drawerState.open() }
                         },
                         actions = {
-                            IconButton(onClick = { /* Búsqueda local */ }) {
+                            IconButton(onClick = { /* Búsqueda integrada en pantalla */ }) {
                                 Icon(
                                     imageVector = Icons.Default.Search,
                                     contentDescription = "Buscar registro"
