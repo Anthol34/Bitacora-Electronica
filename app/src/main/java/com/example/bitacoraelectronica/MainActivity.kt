@@ -13,7 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitacoraelectronica.ui.navigation.AppNavigation
 import com.example.bitacoraelectronica.ui.screens.SettingsViewModel
-import com.example.bitacoraelectronica.ui.theme.BitacoraTheme
+import com.example.bitacoraelectronica.ui.theme.BitacoraElectronicaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
             )
             val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
 
-            BitacoraTheme(
+            BitacoraElectronicaTheme(
                 darkTheme = settingsUiState.isDarkMode,
                 fontSizePreference = settingsUiState.fontSize
             ) {
