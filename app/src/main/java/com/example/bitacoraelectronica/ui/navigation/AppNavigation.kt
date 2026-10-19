@@ -131,10 +131,17 @@ fun AppNavigation(
                     )
                 }
 
-                composable(route = AppDestinations.NuevoRegistro.route) {
+                composable(route = AppDestinations.NuevoRegistro.route) { backStackEntry ->
+                    val capturedPhotoUri = backStackEntry.savedStateHandle
+                        .get<String>("captured_photo_uri")
+
                     NuevoRegistroScreen(
                         onBackClick = { navController.popBackStack() },
-                        onRegistroGuardado = { navController.popBackStack() }
+                        onRegistroGuardado = { navController.popBackStack() },
+                        onTomarFotoClick = {
+                            navController.navigate(AppDestinations.CameraCapture.createRoute(0L))
+                        },
+                        capturedPhotoUri = capturedPhotoUri
                     )
                 }
 

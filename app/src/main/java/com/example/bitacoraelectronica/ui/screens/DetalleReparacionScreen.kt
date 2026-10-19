@@ -195,7 +195,8 @@ fun DetalleReparacionScreen(
                 // 3. Componente visual de fotografía
                 PhotoGalleryThumbnailRow(
                     fotoEvidenciaUri = reparacion?.fotoEvidenciaUri,
-                    onTomarFotoClick = { onTomarFotoClick(reparacion?.id ?: reparacionId) }
+                    onTomarFotoClick = { onTomarFotoClick(reparacion?.id ?: reparacionId) },
+                    onEliminarFotoClick = { uri -> viewModel.eliminarFotoEvidencia(uri) }
                 )
 
                 // Sección 3: Datos técnicos y mediciones de multímetro/osciloscopio

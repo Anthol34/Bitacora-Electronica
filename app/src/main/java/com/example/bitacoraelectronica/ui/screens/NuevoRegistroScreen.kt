@@ -37,12 +37,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bitacoraelectronica.data.local.entity.ReparacionEntity
+import com.example.bitacoraelectronica.ui.components.PhotoGalleryThumbnailRow
 
 // 1. COMPOSABLE CONTENEDOR CON ESTADO (Stateful)
 @Composable
 fun NuevoRegistroScreen(
     onBackClick: () -> Unit,
     onRegistroGuardado: () -> Unit,
+    onTomarFotoClick: () -> Unit = {},
+    capturedPhotoUri: String? = null,
     modifier: Modifier = Modifier,
     viewModel: NuevoRegistroViewModel = viewModel(factory = NuevoRegistroViewModel.Factory)
 ) {
@@ -51,6 +54,12 @@ fun NuevoRegistroScreen(
     LaunchedEffect(uiState.registroExitoso) {
         if (uiState.registroExitoso) {
             onRegistroGuardado()
+        }
+    }
+
+    LaunchedEffect(capturedPhotoUri) {
+        if (!capturedPhotoUri.isNullOrBlank()) {
+            viewModel.onFotoCapturada(capturedPhotoUri)
         }
     }
 
@@ -65,6 +74,8 @@ fun NuevoRegistroScreen(
         onMedicionesChanged = viewModel::onMedicionesChanged,
         onCostoChanged = viewModel::onCostoChanged,
         onComponenteSelected = viewModel::onComponenteInicialSelected,
+        onTomarFotoClick = onTomarFotoClick,
+        onFotoEliminadaClick = viewModel::onFotoEliminada,
         onGuardarClick = viewModel::guardarNuevoRegistro,
         modifier = modifier
     )
@@ -84,6 +95,8 @@ fun NuevoRegistroContent(
     onMedicionesChanged: (String) -> Unit,
     onCostoChanged: (String) -> Unit,
     onComponenteSelected: (Long?) -> Unit,
+    onTomarFotoClick: () -> Unit = {},
+    onFotoEliminadaClick: (String) -> Unit = {},
     onGuardarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -198,6 +211,12 @@ fun NuevoRegistroContent(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
+            )
+
+            PhotoGalleryThumbnailRow(
+                fotoEvidenciaUri = uiState.fotoEvidenciaUri,
+                onTomarFotoClick = onTomarFotoClick,
+                onEliminarFotoClick = onFotoEliminadaClick
             )
 
             if (uiState.componentesDisponibles.isNotEmpty()) {

@@ -27,6 +27,7 @@ data class NuevoRegistroUiState(
     val medicionesTecnicas: String = "",
     val estadoSeleccionado: String = ReparacionEntity.ESTADO_PENDIENTE,
     val costoEstimado: String = "",
+    val fotoEvidenciaUri: String? = null,
     val componenteInicialId: Long? = null,
     val cantidadComponenteInicial: Int = 1,
     val componentesDisponibles: List<ComponenteEntity> = emptyList(),
@@ -85,6 +86,37 @@ class NuevoRegistroViewModel(
         _formState.update { it.copy(componenteInicialId = componenteId) }
     }
 
+    fun onFotoCapturada(nuevaUri: String) {
+        _formState.update { current ->
+            val urisExistentes = current.fotoEvidenciaUri
+                ?.split(",")
+                ?.map { it.trim() }
+                ?.filter { it.isNotBlank() } ?: emptyList()
+
+            val listaActualizada = if (nuevaUri in urisExistentes) {
+                urisExistentes
+            } else {
+                urisExistentes + nuevaUri
+            }
+
+            val nuevaCadena = listaActualizada.joinToString(",")
+            current.copy(fotoEvidenciaUri = nuevaCadena)
+        }
+    }
+
+    fun onFotoEliminada(uriAEliminar: String) {
+        _formState.update { current ->
+            val urisExistentes = current.fotoEvidenciaUri
+                ?.split(",")
+                ?.map { it.trim() }
+                ?.filter { it.isNotBlank() } ?: emptyList()
+
+            val listaFiltrada = urisExistentes.filter { it != uriAEliminar }
+            val nuevaCadena = if (listaFiltrada.isEmpty()) null else listaFiltrada.joinToString(",")
+            current.copy(fotoEvidenciaUri = nuevaCadena)
+        }
+    }
+
     fun guardarNuevoRegistro() {
         val state = _formState.value
         if (state.equipo.isBlank() || state.marcaModelo.isBlank() || state.fallaReportada.isBlank()) {
@@ -105,7 +137,8 @@ class NuevoRegistroViewModel(
                     diagnostico = state.diagnostico.trim(),
                     medicionesTecnicas = state.medicionesTecnicas.trim(),
                     estado = state.estadoSeleccionado,
-                    costoEstimado = costo
+                    costoEstimado = costo,
+                    fotoEvidenciaUri = state.fotoEvidenciaUri
                 )
 
                 val nuevoId = reparacionRepository.insertReparacion(nuevaReparacion)

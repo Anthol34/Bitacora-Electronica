@@ -60,13 +60,45 @@ class DetalleReparacionViewModel(
         val reparacionActual = uiState.value.reparacionConComponentes?.reparacion ?: return
         viewModelScope.launch {
             try {
-                // Si en ReparacionEntity tu propiedad se llama fotoEvidenciaUri,
-                // cambia "fotoUri = nuevaUri" por "fotoEvidenciaUri = nuevaUri"
+                val urisExistentes = reparacionActual.fotoEvidenciaUri
+                    ?.split(",")
+                    ?.map { it.trim() }
+                    ?.filter { it.isNotBlank() } ?: emptyList()
+
+                val listaActualizada = if (nuevaUri in urisExistentes) {
+                    urisExistentes
+                } else {
+                    urisExistentes + nuevaUri
+                }
+
+                val nuevaCadena = listaActualizada.joinToString(",")
+
                 reparacionRepository.updateReparacion(
-                    reparacionActual.copy(fotoEvidenciaUri = nuevaUri)
+                    reparacionActual.copy(fotoEvidenciaUri = nuevaCadena)
                 )
             } catch (e: Exception) {
                 _errorMessage.value = "Error al guardar la foto: ${e.message}"
+            }
+        }
+    }
+
+    fun eliminarFotoEvidencia(uriAEliminar: String) {
+        val reparacionActual = uiState.value.reparacionConComponentes?.reparacion ?: return
+        viewModelScope.launch {
+            try {
+                val urisExistentes = reparacionActual.fotoEvidenciaUri
+                    ?.split(",")
+                    ?.map { it.trim() }
+                    ?.filter { it.isNotBlank() } ?: emptyList()
+
+                val listaFiltrada = urisExistentes.filter { it != uriAEliminar }
+                val nuevaCadena = if (listaFiltrada.isEmpty()) null else listaFiltrada.joinToString(",")
+
+                reparacionRepository.updateReparacion(
+                    reparacionActual.copy(fotoEvidenciaUri = nuevaCadena)
+                )
+            } catch (e: Exception) {
+                _errorMessage.value = "Error al eliminar la foto: ${e.message}"
             }
         }
     }
