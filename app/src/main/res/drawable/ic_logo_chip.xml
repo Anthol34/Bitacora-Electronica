@@ -1,0 +1,41 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Contenedor cuadrado con bordes redondeados -->
+    <path
+        android:fillColor="#3BA770"
+        android:pathData="M30,22h48c4.42,0 8,3.58 8,8v48c0,4.42 -3.58,8 -8,8H30c-4.42,0 -8,-3.58 -8,-8V30c0,-4.42 3.58,-8 8,-8z" />
+
+    <!-- Pines superiores (3) -->
+    <path
+        android:fillColor="#06371F"
+        android:pathData="M41,29h3v7h-3zM52.5,29h3v7h-3zM64,29h3v7h-3z" />
+
+    <!-- Pines inferiores (3) -->
+    <path
+        android:fillColor="#06371F"
+        android:pathData="M41,72h3v7h-3zM52.5,72h3v7h-3zM64,72h3v7h-3z" />
+
+    <!-- Pines izquierdos (3) -->
+    <path
+        android:fillColor="#06371F"
+        android:pathData="M29,41h7v3h-7zM29,52.5h7v3h-7zM29,64h7v3h-7z" />
+
+    <!-- Pines derechos (3) -->
+    <path
+        android:fillColor="#06371F"
+        android:pathData="M72,41h7v3h-7zM72,52.5h7v3h-7zM72,64h7v3h-7z" />
+
+    <!-- Marco exterior del microchip -->
+    <path
+        android:fillColor="#06371F"
+        android:pathData="M36,36h36v36H36V36zM39.5,39.5v29h29v-29H39.5z" />
+
+    <!-- Núcleo interno del microchip -->
+    <path
+        android:fillColor="#06371F"
+        android:pathData="M47,47h14v14H47V47zM50.5,50.5v7h7v-7H50.5z" />
+</vector>
