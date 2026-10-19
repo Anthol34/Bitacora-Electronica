@@ -39,9 +39,7 @@ fun RepairCardItem(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -58,7 +56,11 @@ fun RepairCardItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onClick)
+                ) {
                     Text(
                         text = reparacion.equipo,
                         style = MaterialTheme.typography.titleMedium,
@@ -85,43 +87,49 @@ fun RepairCardItem(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onClick)
+            ) {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = reparacion.fallaReportada,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            if (reparacion.medicionesTecnicas.isNotBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Mediciones: ${reparacion.medicionesTecnicas}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    maxLines = 1,
+                    text = reparacion.fallaReportada,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                EstadoBadge(estado = reparacion.estado)
-
-                if (reparacion.costoEstimado > 0.0) {
+                if (reparacion.medicionesTecnicas.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "$${String.format("%.2f", reparacion.costoEstimado)}",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary
+                        text = "Mediciones: ${reparacion.medicionesTecnicas}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    EstadoBadge(estado = reparacion.estado)
+
+                    if (reparacion.costoEstimado > 0.0) {
+                        Text(
+                            text = "$${String.format("%.2f", reparacion.costoEstimado)}",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
                 }
             }
         }

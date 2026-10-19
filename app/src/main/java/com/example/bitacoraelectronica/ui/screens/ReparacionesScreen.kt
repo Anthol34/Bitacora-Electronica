@@ -21,17 +21,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -48,6 +55,7 @@ fun ReparacionesScreen(
     viewModel: ReparacionesViewModel = viewModel(factory = ReparacionesViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var reparacionAEliminar by remember { mutableStateOf<ReparacionEntity?>(null) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -147,13 +155,41 @@ fun ReparacionesScreen(
                             RepairCardItem(
                                 reparacion = reparacion,
                                 onClick = { onNavigateToDetalle(reparacion.id) },
-                                onDeleteClick = { viewModel.deleteReparacion(reparacion) }
+                                onDeleteClick = { reparacionAEliminar = reparacion }
                             )
                         }
                     }
                 }
             }
         }
+    }
+
+    reparacionAEliminar?.let { reparacion ->
+        AlertDialog(
+            onDismissRequest = { reparacionAEliminar = null },
+            title = { Text("Confirmar eliminación") },
+            text = {
+                Text("¿Está seguro de eliminar la orden de trabajo para \"${reparacion.equipo}\"? Esta acción eliminará permanentemente la ficha técnica de la bitácora.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteReparacion(reparacion)
+                        reparacionAEliminar = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { reparacionAEliminar = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 

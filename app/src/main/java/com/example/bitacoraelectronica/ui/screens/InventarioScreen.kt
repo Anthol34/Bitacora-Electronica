@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -52,6 +53,7 @@ fun InventarioScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
+    var componenteAEliminar by remember { mutableStateOf<ComponenteEntity?>(null) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -150,7 +152,7 @@ fun InventarioScreen(
                                 componente = componente,
                                 onIncrementStock = { viewModel.incrementarStock(componente.id) },
                                 onDecrementStock = { viewModel.decrementarStock(componente.id) },
-                                onDeleteClick = { viewModel.eliminarComponente(componente) }
+                                onDeleteClick = { componenteAEliminar = componente }
                             )
                         }
                     }
@@ -165,6 +167,34 @@ fun InventarioScreen(
             onConfirm = { nuevo ->
                 viewModel.agregarComponente(nuevo)
                 showAddDialog = false
+            }
+        )
+    }
+
+    componenteAEliminar?.let { comp ->
+        AlertDialog(
+            onDismissRequest = { componenteAEliminar = null },
+            title = { Text("Confirmar eliminación") },
+            text = {
+                Text("¿Está seguro de eliminar \"${comp.nombre}\" del inventario?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.eliminarComponente(comp)
+                        componenteAEliminar = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { componenteAEliminar = null }) {
+                    Text("Cancelar")
+                }
             }
         )
     }
@@ -189,10 +219,32 @@ fun NuevoComponenteDialog(
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
-                    label = { Text("Nombre (ej. MOSFET IRF3205)") },
+                    label = { Text("Nombre (ej. MOSFET IRF3205) *") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Text(
+                    text = "Categoría *",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ComponenteEntity.categoriasDisponibles.forEach { cat ->
+                        FilterChip(
+                            selected = categoria == cat,
+                            onClick = { categoria = cat },
+                            label = { Text(cat) }
+                        )
+                    }
+                }
+
                 OutlinedTextField(
                     value = especificacion,
                     onValueChange = { especificacion = it },
