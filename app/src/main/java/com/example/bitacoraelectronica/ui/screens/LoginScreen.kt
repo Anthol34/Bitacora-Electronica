@@ -42,7 +42,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -50,6 +52,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.bitacoraelectronica.R
 import com.example.bitacoraelectronica.ui.navigation.AppDestinations
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -116,10 +119,10 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Icon(
-            imageVector = Icons.Default.Build,
+            painter = painterResource(id = R.drawable.ic_logo_chip),
             contentDescription = "Logotipo de Bitácora Electrónica",
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = Color.Unspecified,
+            modifier = Modifier.size(96.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
